@@ -36,7 +36,7 @@ public class FullscreenActivity extends Activity implements Callback {
 
 	private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
 
-	private static final int DEFAULT_UPDATE_ZEN_VALUES_DELAY = 5000;
+	private static final int DEFAULT_UPDATE_ZEN_VALUES_DELAY = 30000;
 
 	private static final boolean TOGGLE_ON_CLICK = true;
 
