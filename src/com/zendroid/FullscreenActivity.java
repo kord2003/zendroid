@@ -32,7 +32,9 @@ public class FullscreenActivity extends Activity implements Callback {
 
     //russia_soul_3s.mp4
     //test_video.mkv
-    private static final String DEFAULT_MEDIA_FILE = "russia_soul_3s.mp4";
+    private static final String DEFAULT_VIDEO_FILE = "russia_soul_3s.mp4";
+
+    private static final String DEFAULT_AUDIO_FILE = "Lindsey__Stirling-Roundtable_Rival.mp3";
 
     private static final boolean AUTO_HIDE = true;
 
@@ -52,11 +54,15 @@ public class FullscreenActivity extends Activity implements Callback {
 
     private SurfaceView surfaceView;
 
-    private MediaPlayer mediaPlayer;
+    private MediaPlayer mediaPlayerVideo;
+
+    private MediaPlayer mediaPlayerAudio;
 
     private SurfaceHolder surfaceHolder;
 
     private Handler handler = new Handler();
+
+    private View containerZenValues;
 
     private Runnable hideRunnable = new Runnable() {
         @Override
@@ -78,6 +84,7 @@ public class FullscreenActivity extends Activity implements Callback {
 
         setContentView(R.layout.activity_fullscreen);
 
+        containerZenValues = findViewById(R.id.containerZenValues);
         tvUsd = (TextView)findViewById(R.id.tvUsd);
         TypefaceUtils.setCustomTypeface(tvUsd);
         tvEur = (TextView)findViewById(R.id.tvEur);
@@ -97,9 +104,9 @@ public class FullscreenActivity extends Activity implements Callback {
         if (surfaceView == null) {
             surfaceView = (SurfaceView)findViewById(R.id.sfView);
         }
-        if (mediaPlayer == null) {
-            mediaPlayer = new MediaPlayer();
-            mediaPlayer.setLooping(true);
+        if (mediaPlayerVideo == null) {
+            mediaPlayerVideo = new MediaPlayer();
+            mediaPlayerVideo.setLooping(true);
 
             getWindow().setFormat(PixelFormat.UNKNOWN);
 
@@ -107,6 +114,11 @@ public class FullscreenActivity extends Activity implements Callback {
             surfaceHolder.addCallback(this);
             surfaceHolder.setFixedSize(176, 144);
             surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        }
+
+        if (mediaPlayerAudio == null) {
+            mediaPlayerAudio = new MediaPlayer();
+            mediaPlayerAudio.setLooping(true);
         }
 
         final View containerDummyButton = findViewById(R.id.containerDummyButton);
@@ -198,9 +210,13 @@ public class FullscreenActivity extends Activity implements Callback {
         }
     };
 
-    private int currentPosition;
+    private int currentVideoPosition;
 
-    private boolean isPrepared = false;
+    private int currentAudioPosition;
+
+    private boolean isVideoPrepared = false;
+
+    private boolean isAudioPrepared = false;
 
     private boolean isZenAutoUpdateEnabled = true;
 
@@ -223,10 +239,11 @@ public class FullscreenActivity extends Activity implements Callback {
     protected void onResume() {
         super.onResume();
 
-        if (isPrepared) {
+        if (isVideoPrepared && isAudioPrepared) {
             startVideo();
+            startAudio();
         } else {
-            initVideo();
+            initMediaPlayers();
         }
         isZenAutoUpdateEnabled = true;
         updateZenValues();
@@ -240,92 +257,55 @@ public class FullscreenActivity extends Activity implements Callback {
         stopUpdatingZenValues();
     }
 
-    private void initVideo() {
+    private void initMediaPlayers() {
         //Log.d(TAG, "initVideo()");
         surfaceView.post(new Runnable() {
             @Override
             public void run() {
-                if (mediaPlayer.isPlaying()) {
-                    mediaPlayer.reset();
-                }
-
-                mediaPlayer.setDisplay(surfaceHolder);
-
-                try {
-                    AssetFileDescriptor afd = getAssets().openFd(DEFAULT_MEDIA_FILE);
-
-                    mediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(),
-                            afd.getLength());
-
-                    mediaPlayer.prepareAsync();
-                    mediaPlayer.setOnPreparedListener(new OnPreparedListener() {
-                        @Override
-                        public void onPrepared(MediaPlayer mp) {
-                            //Log.d(TAG, "onPrepared()");
-                            isPrepared = true;
-                            switchScreenMode();
-                            startVideo();
-                        }
-                    });
-                    mediaPlayer.setOnSeekCompleteListener(new OnSeekCompleteListener() {
-                        @Override
-                        public void onSeekComplete(MediaPlayer mp) {
-                            //Log.d(TAG, "onSeekComplete()");
-                        }
-                    });
-                    mediaPlayer.setOnInfoListener(new OnInfoListener() {
-                        @Override
-                        public boolean onInfo(MediaPlayer mp, int what, int extra) {
-                            //Log.d(TAG, "onInfo() what = " + what + ", extra = " + extra);
-                            return false;
-                        }
-                    });
-                    mediaPlayer.setOnCompletionListener(new OnCompletionListener() {
-                        @Override
-                        public void onCompletion(MediaPlayer mp) {
-                            //Log.d(TAG, "onCompletion()");
-                        }
-                    });
-                    mediaPlayer.setOnErrorListener(new OnErrorListener() {
-                        @Override
-                        public boolean onError(MediaPlayer mp, int what, int extra) {
-                            //Log.d(TAG, "onError() what = " + what + ", extra = " + extra);
-                            return false;
-                        }
-                    });
-                } catch (IllegalArgumentException e) {
-                    FileLogger.appendLog(getApplicationContext(), "Error: " + e.getMessage());
-                    e.printStackTrace();
-                } catch (IllegalStateException e) {
-                    FileLogger.appendLog(getApplicationContext(), "Error: " + e.getMessage());
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    FileLogger.appendLog(getApplicationContext(), "Error: " + e.getMessage());
-                    e.printStackTrace();
-                }
-
+                initVideoPlayer();
+                initAudioPlayer();
             }
         });
     }
 
     private void startVideo() {
         //Log.d(TAG, "startVideo() currentPosition = " + currentPosition);
-        surfaceView.post(new Runnable() {
+        handler.post(new Runnable() {
             @Override
             public void run() {
-                if (currentPosition == 0) {
-                    currentPosition = 1;
+                if (currentVideoPosition == 0) {
+                    currentVideoPosition = 1;
                 }
-                mediaPlayer.setDisplay(surfaceHolder);
-                mediaPlayer.seekTo(currentPosition);
-                mediaPlayer.start();
+                mediaPlayerVideo.setDisplay(surfaceHolder);
+                mediaPlayerVideo.seekTo(currentVideoPosition);
+                mediaPlayerVideo.start();
             }
         });
     }
 
     private void pauseVideo() {
-        currentPosition = mediaPlayer.getCurrentPosition();
-        mediaPlayer.pause();
+        currentVideoPosition = mediaPlayerVideo.getCurrentPosition();
+        mediaPlayerVideo.pause();
+        //Log.d(TAG, "pauseVideo() currentPosition = " + currentPosition);
+    }
+
+    private void startAudio() {
+        //Log.d(TAG, "startVideo() currentPosition = " + currentPosition);
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (currentAudioPosition == 0) {
+                    currentAudioPosition = 1;
+                }
+                mediaPlayerAudio.seekTo(currentAudioPosition);
+                mediaPlayerAudio.start();
+            }
+        });
+    }
+
+    private void pauseAudio() {
+        currentAudioPosition = mediaPlayerAudio.getCurrentPosition();
+        mediaPlayerAudio.pause();
         //Log.d(TAG, "pauseVideo() currentPosition = " + currentPosition);
     }
 
@@ -351,6 +331,7 @@ public class FullscreenActivity extends Activity implements Callback {
                 tvEur.setText(data.getEur());
                 tvBrent.setText(data.getBrent());
 
+                containerZenValues.setVisibility(View.VISIBLE);
                 if (isZenAutoUpdateEnabled) {
                     startUpdatingZenValues();
                 }
@@ -359,6 +340,10 @@ public class FullscreenActivity extends Activity implements Callback {
             @Override
             public void onError(VolleyError error) {
                 FileLogger.appendLog(getApplicationContext(), "[Error] " + error.getMessage());
+                containerZenValues.setVisibility(View.GONE);
+                if (isZenAutoUpdateEnabled) {
+                    startUpdatingZenValues();
+                }
             }
         });
     }
@@ -388,8 +373,8 @@ public class FullscreenActivity extends Activity implements Callback {
         int surfaceViewWidth = surfaceView.getWidth();
         int surfaceViewHeight = surfaceView.getHeight();
 
-        int videoWidth = mediaPlayer.getVideoWidth();
-        int videoHeight = mediaPlayer.getVideoHeight();
+        int videoWidth = mediaPlayerVideo.getVideoWidth();
+        int videoHeight = mediaPlayerVideo.getVideoHeight();
 
         float ratioWidth = surfaceViewWidth / videoWidth;
         float ratioHeight = surfaceViewHeight / videoHeight;
@@ -414,9 +399,131 @@ public class FullscreenActivity extends Activity implements Callback {
 
     @Override
     protected void onDestroy() {
-        mediaPlayer.release();
-        mediaPlayer = null;
+        mediaPlayerVideo.release();
+        mediaPlayerVideo = null;
+
+        mediaPlayerAudio.release();
+        mediaPlayerAudio = null;
 
         super.onDestroy();
+    }
+
+    private void initVideoPlayer() {
+        if (mediaPlayerVideo.isPlaying()) {
+            mediaPlayerVideo.reset();
+        }
+
+        mediaPlayerVideo.setDisplay(surfaceHolder);
+
+        try {
+            AssetFileDescriptor videoAssetFileDescriptor = getAssets().openFd(DEFAULT_VIDEO_FILE);
+
+            mediaPlayerVideo.setDataSource(videoAssetFileDescriptor.getFileDescriptor(), videoAssetFileDescriptor.getStartOffset(),
+                    videoAssetFileDescriptor.getLength());
+            mediaPlayerVideo.prepareAsync();
+            mediaPlayerVideo.setOnPreparedListener(new OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    //Log.d(TAG, "onPrepared()");
+                    isVideoPrepared = true;
+                    mediaPlayerVideo.setVolume(0f, 0f);
+                    switchScreenMode();
+                    startVideo();
+                }
+            });
+            mediaPlayerVideo.setOnSeekCompleteListener(new OnSeekCompleteListener() {
+                @Override
+                public void onSeekComplete(MediaPlayer mp) {
+                    //Log.d(TAG, "onSeekComplete()");
+                }
+            });
+            mediaPlayerVideo.setOnInfoListener(new OnInfoListener() {
+                @Override
+                public boolean onInfo(MediaPlayer mp, int what, int extra) {
+                    //Log.d(TAG, "onInfo() what = " + what + ", extra = " + extra);
+                    return false;
+                }
+            });
+            mediaPlayerVideo.setOnCompletionListener(new OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    //Log.d(TAG, "onCompletion()");
+                }
+            });
+            mediaPlayerVideo.setOnErrorListener(new OnErrorListener() {
+                @Override
+                public boolean onError(MediaPlayer mp, int what, int extra) {
+                    //Log.d(TAG, "onError() what = " + what + ", extra = " + extra);
+                    return false;
+                }
+            });
+        } catch (IllegalArgumentException e) {
+            FileLogger.appendLog(getApplicationContext(), "Error: " + e.getMessage());
+            e.printStackTrace();
+        } catch (IllegalStateException e) {
+            FileLogger.appendLog(getApplicationContext(), "Error: " + e.getMessage());
+            e.printStackTrace();
+        } catch (IOException e) {
+            FileLogger.appendLog(getApplicationContext(), "Error: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void initAudioPlayer() {
+        if (mediaPlayerAudio.isPlaying()) {
+            mediaPlayerAudio.reset();
+        }
+
+        try {
+            AssetFileDescriptor audioAssetFileDescriptor = getAssets().openFd(DEFAULT_AUDIO_FILE);
+
+            mediaPlayerAudio.setDataSource(audioAssetFileDescriptor.getFileDescriptor(), audioAssetFileDescriptor.getStartOffset(),
+                    audioAssetFileDescriptor.getLength());
+            mediaPlayerAudio.prepareAsync();
+            mediaPlayerAudio.setOnPreparedListener(new OnPreparedListener() {
+
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    //Log.d(TAG, "onPrepared()");
+                    isAudioPrepared = true;
+                    startAudio();
+                }
+            });
+            mediaPlayerAudio.setOnSeekCompleteListener(new OnSeekCompleteListener() {
+                @Override
+                public void onSeekComplete(MediaPlayer mp) {
+                    //Log.d(TAG, "onSeekComplete()");
+                }
+            });
+            mediaPlayerAudio.setOnInfoListener(new OnInfoListener() {
+                @Override
+                public boolean onInfo(MediaPlayer mp, int what, int extra) {
+                    //Log.d(TAG, "onInfo() what = " + what + ", extra = " + extra);
+                    return false;
+                }
+            });
+            mediaPlayerAudio.setOnCompletionListener(new OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    //Log.d(TAG, "onCompletion()");
+                }
+            });
+            mediaPlayerAudio.setOnErrorListener(new OnErrorListener() {
+                @Override
+                public boolean onError(MediaPlayer mp, int what, int extra) {
+                    //Log.d(TAG, "onError() what = " + what + ", extra = " + extra);
+                    return false;
+                }
+            });
+        } catch (IllegalArgumentException e) {
+            FileLogger.appendLog(getApplicationContext(), "Error: " + e.getMessage());
+            e.printStackTrace();
+        } catch (IllegalStateException e) {
+            FileLogger.appendLog(getApplicationContext(), "Error: " + e.getMessage());
+            e.printStackTrace();
+        } catch (IOException e) {
+            FileLogger.appendLog(getApplicationContext(), "Error: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }
