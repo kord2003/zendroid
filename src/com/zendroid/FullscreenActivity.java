@@ -1,10 +1,13 @@
+
 package com.zendroid;
 
-import java.io.IOException;
+import com.android.volley.VolleyError;
+import com.zendroid.util.SystemUiHider;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.res.AssetFileDescriptor;
+import android.content.res.Configuration;
 import android.graphics.PixelFormat;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
@@ -15,387 +18,405 @@ import android.media.MediaPlayer.OnSeekCompleteListener;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
 import android.view.View;
+import android.widget.FrameLayout.LayoutParams;
 import android.widget.TextView;
 
-import com.android.volley.VolleyError;
-import com.zendroid.util.SystemUiHider;
+import java.io.IOException;
 
 public class FullscreenActivity extends Activity implements Callback {
 
-	//russia_soul_3s.mp4
-	//test_video.mkv
-	private static final String DEFAULT_MEDIA_FILE = "russia_soul_3s.mp4";
+    //russia_soul_3s.mp4
+    //test_video.mkv
+    private static final String DEFAULT_MEDIA_FILE = "russia_soul_3s.mp4";
 
-	private static final boolean AUTO_HIDE = true;
+    private static final boolean AUTO_HIDE = true;
 
-	private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
+    private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
 
-	private static final int DEFAULT_UPDATE_ZEN_VALUES_DELAY = 30000;
+    private static final int DEFAULT_UPDATE_ZEN_VALUES_DELAY = 30000;
 
-	private static final boolean TOGGLE_ON_CLICK = true;
+    private static final boolean TOGGLE_ON_CLICK = true;
 
-	private static final int HIDER_FLAGS = SystemUiHider.FLAG_HIDE_NAVIGATION;
+    private static final int HIDER_FLAGS = SystemUiHider.FLAG_HIDE_NAVIGATION;
 
-	private static final String TAG = FullscreenActivity.class.getName();
+    private static final String TAG = FullscreenActivity.class.getName();
 
-	private SystemUiHider mSystemUiHider;
+    private SystemUiHider mSystemUiHider;
 
-	private WebRequestHelper webRequestHelper;
+    private WebRequestHelper webRequestHelper;
 
-	private SurfaceView surfaceView;
+    private SurfaceView surfaceView;
 
-	private MediaPlayer mediaPlayer;
+    private MediaPlayer mediaPlayer;
 
-	private SurfaceHolder surfaceHolder;
+    private SurfaceHolder surfaceHolder;
 
-	private Handler handler = new Handler();
+    private Handler handler = new Handler();
 
-	private Runnable hideRunnable = new Runnable() {
-		@Override
-		public void run() {
-			mSystemUiHider.hide();
-		}
-	};
+    private Runnable hideRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mSystemUiHider.hide();
+        }
+    };
 
-	private Runnable updateZenValuesRunnable = new Runnable() {
-		@Override
-		public void run() {
-			updateZenValues();
-		}
-	};
+    private Runnable updateZenValuesRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updateZenValues();
+        }
+    };
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-		setContentView(R.layout.activity_fullscreen);
-		
-		tvUsd = (TextView) findViewById(R.id.tvUsd);
-		TypefaceUtils.setCustomTypeface(tvUsd);
-		tvEur = (TextView) findViewById(R.id.tvEur);
-		TypefaceUtils.setCustomTypeface(tvEur);
-		tvBrent = (TextView) findViewById(R.id.tvBrent);
-		TypefaceUtils.setCustomTypeface(tvBrent);
-		
+        setContentView(R.layout.activity_fullscreen);
 
-		TextView tvUsdLabel = (TextView) findViewById(R.id.tvUsdLabel);
-		TypefaceUtils.setCustomTypeface(tvUsdLabel);
-		TextView tvEurLabel = (TextView) findViewById(R.id.tvEurLabel);
-		TypefaceUtils.setCustomTypeface(tvEurLabel);
-		TextView tvBrentLabel = (TextView) findViewById(R.id.tvBrentLabel);
-		TypefaceUtils.setCustomTypeface(tvBrentLabel);
-		
+        tvUsd = (TextView)findViewById(R.id.tvUsd);
+        TypefaceUtils.setCustomTypeface(tvUsd);
+        tvEur = (TextView)findViewById(R.id.tvEur);
+        TypefaceUtils.setCustomTypeface(tvEur);
+        tvBrent = (TextView)findViewById(R.id.tvBrent);
+        TypefaceUtils.setCustomTypeface(tvBrent);
 
-		webRequestHelper = new WebRequestHelper(getApplicationContext());
+        TextView tvUsdLabel = (TextView)findViewById(R.id.tvUsdLabel);
+        TypefaceUtils.setCustomTypeface(tvUsdLabel);
+        TextView tvEurLabel = (TextView)findViewById(R.id.tvEurLabel);
+        TypefaceUtils.setCustomTypeface(tvEurLabel);
+        TextView tvBrentLabel = (TextView)findViewById(R.id.tvBrentLabel);
+        TypefaceUtils.setCustomTypeface(tvBrentLabel);
 
-		if (surfaceView == null) {
-			surfaceView = (SurfaceView) findViewById(R.id.sfView);
-		}
-		if (mediaPlayer == null) {
-			mediaPlayer = new MediaPlayer();
-			mediaPlayer.setLooping(true);
+        webRequestHelper = new WebRequestHelper(getApplicationContext());
 
-			getWindow().setFormat(PixelFormat.UNKNOWN);
+        if (surfaceView == null) {
+            surfaceView = (SurfaceView)findViewById(R.id.sfView);
+        }
+        if (mediaPlayer == null) {
+            mediaPlayer = new MediaPlayer();
+            mediaPlayer.setLooping(true);
 
-			surfaceHolder = surfaceView.getHolder();
-			surfaceHolder.addCallback(this);
-			surfaceHolder.setFixedSize(176, 144);
-			surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-		}
+            getWindow().setFormat(PixelFormat.UNKNOWN);
 
-		final View containerDummyButton = findViewById(R.id.containerDummyButton);
-		final View containerTouchZone = findViewById(R.id.containerTouchZone);
+            surfaceHolder = surfaceView.getHolder();
+            surfaceHolder.addCallback(this);
+            surfaceHolder.setFixedSize(176, 144);
+            surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        }
 
-		// Set up an instance of SystemUiHider to control the system UI for
-		// this activity.
-		mSystemUiHider = SystemUiHider.getInstance(this, containerTouchZone,
-				HIDER_FLAGS);
-		mSystemUiHider.setup();
-		mSystemUiHider
-				.setOnVisibilityChangeListener(new SystemUiHider.OnVisibilityChangeListener() {
-					// Cached values.
-					int mControlsHeight;
-					int mShortAnimTime;
+        final View containerDummyButton = findViewById(R.id.containerDummyButton);
+        final View containerTouchZone = findViewById(R.id.containerTouchZone);
 
-					@Override
-					@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
-					public void onVisibilityChange(boolean visible) {
-						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-							// If the ViewPropertyAnimator API is available
-							// (Honeycomb MR2 and later), use it to animate the
-							// in-layout UI controls at the bottom of the
-							// screen.
-							if (mControlsHeight == 0) {
-								mControlsHeight = containerDummyButton
-										.getHeight();
-							}
-							if (mShortAnimTime == 0) {
-								mShortAnimTime = getResources().getInteger(
-										android.R.integer.config_shortAnimTime);
-							}
-							containerDummyButton
-									.animate()
-									.translationY(visible ? 0 : mControlsHeight)
-									.setDuration(mShortAnimTime);
-						} else {
-							// If the ViewPropertyAnimator APIs aren't
-							// available, simply show or hide the in-layout UI
-							// controls.
-							containerDummyButton
-									.setVisibility(visible ? View.VISIBLE
-											: View.GONE);
-						}
+        // Set up an instance of SystemUiHider to control the system UI for
+        // this activity.
+        mSystemUiHider = SystemUiHider.getInstance(this, containerTouchZone, HIDER_FLAGS);
+        mSystemUiHider.setup();
+        mSystemUiHider
+        .setOnVisibilityChangeListener(new SystemUiHider.OnVisibilityChangeListener() {
+            // Cached values.
+            int mControlsHeight;
 
-						if (visible && AUTO_HIDE) {
-							// Schedule a hide().
-							delayedHide(AUTO_HIDE_DELAY_MILLIS);
-						}
-					}
-				});
+            int mShortAnimTime;
 
-		// Set up the user interaction to manually show or hide the system UI.
-		containerTouchZone.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				if (TOGGLE_ON_CLICK) {
-					mSystemUiHider.toggle();
-				} else {
-					mSystemUiHider.show();
-				}
-			}
-		});
+            @Override
+            @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
+            public void onVisibilityChange(boolean visible) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+                    // If the ViewPropertyAnimator API is available
+                    // (Honeycomb MR2 and later), use it to animate the
+                    // in-layout UI controls at the bottom of the
+                    // screen.
+                    if (mControlsHeight == 0) {
+                        mControlsHeight = containerDummyButton.getHeight();
+                    }
+                    if (mShortAnimTime == 0) {
+                        mShortAnimTime = getResources().getInteger(
+                                android.R.integer.config_shortAnimTime);
+                    }
+                    containerDummyButton.animate()
+                    .translationY(visible ? 0 : mControlsHeight)
+                    .setDuration(mShortAnimTime);
+                } else {
+                    // If the ViewPropertyAnimator APIs aren't
+                    // available, simply show or hide the in-layout UI
+                    // controls.
+                    containerDummyButton.setVisibility(visible ? View.VISIBLE : View.GONE);
+                }
 
-		// Upon interacting with UI controls, delay any scheduled hide()
-		// operations to prevent the jarring behavior of controls going away
-		// while interacting with the UI.
-		findViewById(R.id.btnDummy).setOnTouchListener(mDelayHideTouchListener);
-	}
+                if (visible && AUTO_HIDE) {
+                    // Schedule a hide().
+                    delayedHide(AUTO_HIDE_DELAY_MILLIS);
+                }
+            }
+        });
 
-	@Override
-	protected void onPostCreate(Bundle savedInstanceState) {
-		super.onPostCreate(savedInstanceState);
+        // Set up the user interaction to manually show or hide the system UI.
+        containerTouchZone.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (TOGGLE_ON_CLICK) {
+                    mSystemUiHider.toggle();
+                } else {
+                    mSystemUiHider.show();
+                }
+            }
+        });
 
-		// Trigger the initial hide() shortly after the activity has been
-		// created, to briefly hint to the user that UI controls
-		// are available.
-		delayedHide(100);
-	}
+        // Upon interacting with UI controls, delay any scheduled hide()
+        // operations to prevent the jarring behavior of controls going away
+        // while interacting with the UI.
+        findViewById(R.id.btnDummy).setOnTouchListener(mDelayHideTouchListener);
+    }
 
-	/**
-	 * Touch listener to use for in-layout UI controls to delay hiding the
-	 * system UI. This is to prevent the jarring behavior of controls going away
-	 * while interacting with activity UI.
-	 */
-	View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
-		@Override
-		public boolean onTouch(View view, MotionEvent motionEvent) {
-			if (AUTO_HIDE) {
-				delayedHide(AUTO_HIDE_DELAY_MILLIS);
-			}
-			return false;
-		}
-	};
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
 
-	private int currentPosition;
+        // Trigger the initial hide() shortly after the activity has been
+        // created, to briefly hint to the user that UI controls
+        // are available.
+        delayedHide(100);
+    }
 
-	private boolean isPrepared = false;
+    /**
+     * Touch listener to use for in-layout UI controls to delay hiding the
+     * system UI. This is to prevent the jarring behavior of controls going away
+     * while interacting with activity UI.
+     */
+    View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View view, MotionEvent motionEvent) {
+            if (AUTO_HIDE) {
+                delayedHide(AUTO_HIDE_DELAY_MILLIS);
+            }
+            return false;
+        }
+    };
 
-	private boolean isZenAutoUpdateEnabled = true;
+    private int currentPosition;
 
-	private TextView tvUsd;
+    private boolean isPrepared = false;
 
-	private TextView tvEur;
+    private boolean isZenAutoUpdateEnabled = true;
 
-	private TextView tvBrent;
+    private TextView tvUsd;
 
-	/**
-	 * Schedules a call to hide() in [delay] milliseconds, canceling any
-	 * previously scheduled calls.
-	 */
-	private void delayedHide(int delayMillis) {
-		handler.removeCallbacks(hideRunnable);
-		handler.postDelayed(hideRunnable, delayMillis);
-	}
+    private TextView tvEur;
 
-	@Override
-	protected void onResume() {
-		super.onResume();		
+    private TextView tvBrent;
 
-		if (isPrepared) {
-			startVideo();
-		} else {
-			initVideo();
-		}
-		isZenAutoUpdateEnabled = true;
-		updateZenValues();
-	}
+    /**
+     * Schedules a call to hide() in [delay] milliseconds, canceling any
+     * previously scheduled calls.
+     */
+    private void delayedHide(int delayMillis) {
+        handler.removeCallbacks(hideRunnable);
+        handler.postDelayed(hideRunnable, delayMillis);
+    }
 
-	@Override
-	protected void onPause() {
-		super.onPause();
-		pauseVideo();
-		isZenAutoUpdateEnabled = false;
-		stopUpdatingZenValues();
-	}
+    @Override
+    protected void onResume() {
+        super.onResume();
 
-	private void initVideo() {
-		//Log.d(TAG, "initVideo()");
-		surfaceView.post(new Runnable() {
-			@Override
-			public void run() {
-				if (mediaPlayer.isPlaying()) {
-					mediaPlayer.reset();
-				}
+        if (isPrepared) {
+            startVideo();
+        } else {
+            initVideo();
+        }
+        isZenAutoUpdateEnabled = true;
+        updateZenValues();
+    }
 
-				mediaPlayer.setDisplay(surfaceHolder);
+    @Override
+    protected void onPause() {
+        super.onPause();
+        pauseVideo();
+        isZenAutoUpdateEnabled = false;
+        stopUpdatingZenValues();
+    }
 
-				try {
-					AssetFileDescriptor afd = getAssets().openFd(DEFAULT_MEDIA_FILE);
-					
-					mediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+    private void initVideo() {
+        //Log.d(TAG, "initVideo()");
+        surfaceView.post(new Runnable() {
+            @Override
+            public void run() {
+                if (mediaPlayer.isPlaying()) {
+                    mediaPlayer.reset();
+                }
 
-					mediaPlayer.prepareAsync();
-					mediaPlayer.setOnPreparedListener(new OnPreparedListener() {
-						@Override
-						public void onPrepared(MediaPlayer mp) {
-							//Log.d(TAG, "onPrepared()");
-							isPrepared = true;
-							startVideo();
-						}
-					});
-					mediaPlayer
-							.setOnSeekCompleteListener(new OnSeekCompleteListener() {
-								@Override
-								public void onSeekComplete(MediaPlayer mp) {
-									//Log.d(TAG, "onSeekComplete()");
-								}
-							});
-					mediaPlayer.setOnInfoListener(new OnInfoListener() {
-						@Override
-						public boolean onInfo(MediaPlayer mp, int what,
-								int extra) {
-							//Log.d(TAG, "onInfo() what = " + what + ", extra = " + extra);
-							return false;
-						}
-					});
-					mediaPlayer
-							.setOnCompletionListener(new OnCompletionListener() {
-								@Override
-								public void onCompletion(MediaPlayer mp) {
-									//Log.d(TAG, "onCompletion()");
-								}
-							});
-					mediaPlayer.setOnErrorListener(new OnErrorListener() {
-						@Override
-						public boolean onError(MediaPlayer mp, int what,
-								int extra) {
-							//Log.d(TAG, "onError() what = " + what + ", extra = " + extra);
-							return false;
-						}
-					});
-				} catch (IllegalArgumentException e) {
-					FileLogger.appendLog(getApplicationContext(),
-							"Error: " + e.getMessage());
-					e.printStackTrace();
-				} catch (IllegalStateException e) {
-					FileLogger.appendLog(getApplicationContext(),
-							"Error: " + e.getMessage());
-					e.printStackTrace();
-				} catch (IOException e) {
-					FileLogger.appendLog(getApplicationContext(),
-							"Error: " + e.getMessage());
-					e.printStackTrace();
-				}
+                mediaPlayer.setDisplay(surfaceHolder);
 
-			}
-		});
-	}
+                try {
+                    AssetFileDescriptor afd = getAssets().openFd(DEFAULT_MEDIA_FILE);
 
-	private void startVideo() {
-		//Log.d(TAG, "startVideo() currentPosition = " + currentPosition);
-		surfaceView.post(new Runnable() {
-			@Override
-			public void run() {
-				if (currentPosition == 0) {
-					currentPosition = 1;
-				}
-				mediaPlayer.setDisplay(surfaceHolder);
-				mediaPlayer.seekTo(currentPosition);
-				mediaPlayer.start();
-			}
-		});
-	}
+                    mediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(),
+                            afd.getLength());
 
-	private void pauseVideo() {
-		currentPosition = mediaPlayer.getCurrentPosition();
-		mediaPlayer.pause();
-		//Log.d(TAG, "pauseVideo() currentPosition = " + currentPosition);
-	}
+                    mediaPlayer.prepareAsync();
+                    mediaPlayer.setOnPreparedListener(new OnPreparedListener() {
+                        @Override
+                        public void onPrepared(MediaPlayer mp) {
+                            //Log.d(TAG, "onPrepared()");
+                            isPrepared = true;
+                            switchScreenMode();
+                            startVideo();
+                        }
+                    });
+                    mediaPlayer.setOnSeekCompleteListener(new OnSeekCompleteListener() {
+                        @Override
+                        public void onSeekComplete(MediaPlayer mp) {
+                            //Log.d(TAG, "onSeekComplete()");
+                        }
+                    });
+                    mediaPlayer.setOnInfoListener(new OnInfoListener() {
+                        @Override
+                        public boolean onInfo(MediaPlayer mp, int what, int extra) {
+                            //Log.d(TAG, "onInfo() what = " + what + ", extra = " + extra);
+                            return false;
+                        }
+                    });
+                    mediaPlayer.setOnCompletionListener(new OnCompletionListener() {
+                        @Override
+                        public void onCompletion(MediaPlayer mp) {
+                            //Log.d(TAG, "onCompletion()");
+                        }
+                    });
+                    mediaPlayer.setOnErrorListener(new OnErrorListener() {
+                        @Override
+                        public boolean onError(MediaPlayer mp, int what, int extra) {
+                            //Log.d(TAG, "onError() what = " + what + ", extra = " + extra);
+                            return false;
+                        }
+                    });
+                } catch (IllegalArgumentException e) {
+                    FileLogger.appendLog(getApplicationContext(), "Error: " + e.getMessage());
+                    e.printStackTrace();
+                } catch (IllegalStateException e) {
+                    FileLogger.appendLog(getApplicationContext(), "Error: " + e.getMessage());
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    FileLogger.appendLog(getApplicationContext(), "Error: " + e.getMessage());
+                    e.printStackTrace();
+                }
 
-	private synchronized void startUpdatingZenValues() {
-		//Log.d(TAG, "startUpdatingZenValues");
-		isZenAutoUpdateEnabled = true;
-		handler.removeCallbacks(updateZenValuesRunnable);
-		handler.postDelayed(updateZenValuesRunnable,
-				DEFAULT_UPDATE_ZEN_VALUES_DELAY);
-	}
+            }
+        });
+    }
 
-	private synchronized void stopUpdatingZenValues() {
-		//Log.d(TAG, "stopUpdatingZenValues");
-		handler.removeCallbacks(updateZenValuesRunnable);
-	}
+    private void startVideo() {
+        //Log.d(TAG, "startVideo() currentPosition = " + currentPosition);
+        surfaceView.post(new Runnable() {
+            @Override
+            public void run() {
+                if (currentPosition == 0) {
+                    currentPosition = 1;
+                }
+                mediaPlayer.setDisplay(surfaceHolder);
+                mediaPlayer.seekTo(currentPosition);
+                mediaPlayer.start();
+            }
+        });
+    }
 
-	private void updateZenValues() {
-		webRequestHelper.sendZenRequest(null,
-				new OnResponseListener<ZenResponse>() {
-					@Override
-					public void onSuccess(ZenResponse data) {
-						FileLogger.appendLog(getApplicationContext(), "u = "
-								+ data.getUsd() + ", e = " + data.getEur()
-								+ ", b = " + data.getBrent());
-						tvUsd.setText(data.getUsd());
-						tvEur.setText(data.getEur());
-						tvBrent.setText(data.getBrent());
-						
-						if (isZenAutoUpdateEnabled) {
-							startUpdatingZenValues();
-						}
-					}
+    private void pauseVideo() {
+        currentPosition = mediaPlayer.getCurrentPosition();
+        mediaPlayer.pause();
+        //Log.d(TAG, "pauseVideo() currentPosition = " + currentPosition);
+    }
 
-					@Override
-					public void onError(VolleyError error) {
-						FileLogger.appendLog(getApplicationContext(),
-								"[Error] " + error.getMessage());
-					}
-				});
-	}
+    private synchronized void startUpdatingZenValues() {
+        //Log.d(TAG, "startUpdatingZenValues");
+        isZenAutoUpdateEnabled = true;
+        handler.removeCallbacks(updateZenValuesRunnable);
+        handler.postDelayed(updateZenValuesRunnable, DEFAULT_UPDATE_ZEN_VALUES_DELAY);
+    }
 
-	@Override
-	public void surfaceChanged(SurfaceHolder arg0, int arg1, int arg2, int arg3) {
-		// TODO Auto-generated method stub
-	}
+    private synchronized void stopUpdatingZenValues() {
+        //Log.d(TAG, "stopUpdatingZenValues");
+        handler.removeCallbacks(updateZenValuesRunnable);
+    }
 
-	@Override
-	public void surfaceCreated(SurfaceHolder arg0) {
-		// TODO Auto-generated method stub
-	}
+    private void updateZenValues() {
+        webRequestHelper.sendZenRequest(null, new OnResponseListener<ZenResponse>() {
+            @Override
+            public void onSuccess(ZenResponse data) {
+                FileLogger.appendLog(getApplicationContext(), "u = " + data.getUsd() + ", e = "
+                        + data.getEur() + ", b = " + data.getBrent());
+                tvUsd.setText(data.getUsd());
+                tvEur.setText(data.getEur());
+                tvBrent.setText(data.getBrent());
 
-	@Override
-	public void surfaceDestroyed(SurfaceHolder arg0) {
-		// TODO Auto-generated method stub
-	}
-	
-	@Override
-	protected void onDestroy() {
-		mediaPlayer.release();
-		mediaPlayer = null;
-		
-		super.onDestroy();
-	}
+                if (isZenAutoUpdateEnabled) {
+                    startUpdatingZenValues();
+                }
+            }
+
+            @Override
+            public void onError(VolleyError error) {
+                FileLogger.appendLog(getApplicationContext(), "[Error] " + error.getMessage());
+            }
+        });
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder arg0, int arg1, int arg2, int arg3) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder arg0) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder arg0) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        switchScreenMode();
+    }
+
+    private void switchScreenMode() {
+        int surfaceViewWidth = surfaceView.getWidth();
+        int surfaceViewHeight = surfaceView.getHeight();
+
+        int videoWidth = mediaPlayer.getVideoWidth();
+        int videoHeight = mediaPlayer.getVideoHeight();
+
+        float ratioWidth = surfaceViewWidth / videoWidth;
+        float ratioHeight = surfaceViewHeight / videoHeight;
+        //float aspectRatio = videoWidth/videoHeight;
+
+        LayoutParams layoutParams = (LayoutParams)surfaceView.getLayoutParams();
+
+        //Log.d(TAG, "switchScreenMode videoWidth = " + videoWidth + ", videoHeight = " + videoHeight + ", aspectRatio = " + aspectRatio);
+        if (ratioWidth > ratioHeight) {
+
+            layoutParams.width = surfaceViewWidth;
+            layoutParams.height = (int)(videoHeight * ratioWidth);
+        } else {
+            layoutParams.width = (int)(videoWidth * ratioHeight);
+            layoutParams.height = surfaceViewHeight;
+        }
+
+        //Log.d(TAG, "switchScreenMode layoutParams.width = " + layoutParams.width + ", layoutParams.height = " + layoutParams.height);
+
+        surfaceView.setLayoutParams(layoutParams);
+    }
+
+    @Override
+    protected void onDestroy() {
+        mediaPlayer.release();
+        mediaPlayer = null;
+
+        super.onDestroy();
+    }
 }

@@ -3,7 +3,6 @@
     android:id="@+id/containerTouchZone"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0099cc"
     tools:context="com.zendroid.FullscreenActivity" >
 
     <!-- The primary full-screen view. This can be replaced with whatever view is needed to present your content, e.g. VideoView, SurfaceView, TextureView, etc. -->
@@ -11,7 +10,8 @@
     <SurfaceView
         android:id="@+id/sfView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:layout_gravity="center" />
 
     <LinearLayout
         android:layout_width="match_parent"
