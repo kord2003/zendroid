@@ -1,12 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">ZenDroid</string>
+    <string name="app_name">Rouble - BUSTED!</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">66,6</string>
     
     <string name="usd_label">Dollar</string>    
     <string name="eur_label">Euro</string>    
-    <string name="brent_label">Brent</string>
+    <string name="brent_label">Brent</string>    
+    
+    <string name="label_connection_error">Looks like you internet connection is DOWN.\nNo updates until you reconnect.</string>    
+    
+    <string name="label_share">Share</string>  
+    <string name="share_prefix">Did I ever tell you what the definition of INSANITY is? Insanity is </string>
+    <string name="share_postfix">Watch the ruble exchange rate via app:\r\nhttps://play.google.com/store/apps/details?id=kr.ym.nash</string>
 
 </resources>

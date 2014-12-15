@@ -3,7 +3,7 @@
     android:id="@+id/containerTouchZone"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.zendroid.FullscreenActivity" >
+    tools:context="kr.ym.nash.FullscreenActivity" >
 
     <!-- The primary full-screen view. This can be replaced with whatever view is needed to present your content, e.g. VideoView, SurfaceView, TextureView, etc. -->
 
@@ -13,13 +13,27 @@
         android:layout_height="match_parent"
         android:layout_gravity="center" />
 
+    <TextView
+        android:id="@+id/tvErrorMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:keepScreenOn="true"
+        android:singleLine="false"
+        android:text="@string/label_connection_error"
+        android:textColor="@color/font_color_zen_values"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
     <LinearLayout
         android:id="@+id/containerZenValues"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:visibility="gone"
-        android:orientation="horizontal" >
+        android:orientation="horizontal"
+        android:visibility="gone" >
 
         <LinearLayout
             android:layout_width="0dp"

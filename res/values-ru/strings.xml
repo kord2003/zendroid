@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">ZenDroid</string>
+    <string name="app_name">Рубль - ВСЁ!</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">66,6</string>
     
     <string name="usd_label">Доллар</string>    
     <string name="eur_label">Евро</string>    
     <string name="brent_label">Брент</string>
+    
+    <string name="label_connection_error">Кажется, ваш интернет ВСЁ.\nНе ждите обновлений, пока не восстановится связь.</string>
+    
+    <string name="label_share">Поделиться</string>  
+    <string name="share_prefix">Я уже говорил тебе что такое БЕЗУМИЕ? Безумие это </string>
+    <string name="share_postfix">Следи за курсом рубля через приложение:\r\nhttps://play.google.com/store/apps/details?id=kr.ym.nash</string>
+
 
 </resources>
